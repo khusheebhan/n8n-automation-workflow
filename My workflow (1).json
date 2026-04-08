@@ -1,0 +1,329 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1e811526-e2ad-43bc-b78a-d11a264e2a47",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ADD_YOUR_API",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "ADD_YOUR_API_KEY_VALUE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.1-8b-instant\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You generate viral Zack D Films style short video ideas.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate ONE viral educational short video idea. Output only the idea sentence.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "510db21c-edae-490c-b187-b849f22cd01d",
+      "name": "Idea"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ADD_YOUR_API",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "ADD_YOUR_API_KEY_VALUE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert educational video script writer for cinematic short videos similar to Zack D Films.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a short educational video script about {{ $node[\\\"Idea\\\"].json[\\\"idea\\\"] }}. The output must be valid JSON only. Do NOT include explanations. Structure it as an array of scenes with the following format: [{\\\"scene\\\":1,\\\"visual\\\":\\\"what we see on screen\\\",\\\"narration\\\":\\\"voiceover line\\\",\\\"duration\\\":4}]. Create exactly 4 scenes. Visuals should be cinematic, dramatic, and educational. Narration must be short, punchy, and easy to understand.\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        0
+      ],
+      "id": "2eabaa00-24e6-4bcd-97d4-178c8409ec36",
+      "name": "Generate Script"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ADD_YOUR_API",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "ADD_YOUR_API_KEY_VALUE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You extract scene information from a JSON script.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Return only the scenes JSON from this script: {{ $node[\\\"Generate Script\\\"].json[\\\"choices\\\"][0][\\\"message\\\"][\\\"content\\\"] }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        656,
+        0
+      ],
+      "id": "ff73ac77-b29c-48ce-9cf8-f702324aad2b",
+      "name": "Split Scenes"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ADD_YOUR_API",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "ADD_YOUR_API_KEY_VALUE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You create short cinematic prompts for image generation.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Convert this scene into a short Stable Diffusion style prompt with a clear subject first: {{ $node[\\\"Split Scenes\\\"].json[\\\"visual\\\"] }}. Format: subject, environment, ultra realistic 3D render, octane render, cinematic lighting, volumetric lighting, depth of field, educational illustration.\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        0
+      ],
+      "id": "adb82a12-8e34-4251-ab7e-8775e1424b62",
+      "name": "Generate Image Prompts",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "url": "=https://picsum.photos/seed/{{ encodeURIComponent($node[\"Generate Image Prompts\"].json[\"choices\"][0][\"message\"][\"content\"].slice(0,50)) }}/1080/1920",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "5f8b4857-b0e0-4f1d-8d48-98bd51e3df03",
+      "name": "Generate Images",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ADD_YOUR_API",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "ADD_YOUR_API_KEY_VALUE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "audio/mpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n\"text\": \"{{ $node[\\\"Split Scenes\\\"].json[\\\"narration\\\"] }}\",\n\"model_id\": \"eleven_turbo_v2\",\n\"voice_settings\": {\n\"stability\": 0.4,\n\"similarity_boost\": 0.8\n}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "c4652df8-8317-404a-a778-6ea6b73e0a73",
+      "name": "Generate Voiceover"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ce814c3-a5a7-4228-8452-f2d3b05181ee",
+              "name": "ffmpeg_command",
+              "value": "ffmpeg -loop 1 -i image.jpg -i audio.mp3 -vf \"zoompan=z='min(zoom+0.0015,1.5)':d=125:s=1080x1920\" -shortest -c:v libx264 -c:a aac video.mp4",
+              "type": "string"
+            },
+            {
+              "id": "ce8f9117-a379-479b-b74c-908cb660b914",
+              "name": "command",
+              "value": "ffmpeg -loop 1 -i image.jpg -i audio.mp3 -shortest -vf \"scale=1080:1920,zoompan=z='min(zoom+0.0015,1.2)':d=125\" -c:v libx264 -c:a aac output.mp4",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "2df8946c-45d8-4341-b97a-d523b41a03bc",
+      "name": "Build video command"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Idea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idea": {
+      "main": [
+        [
+          {
+            "node": "Generate Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Script": {
+      "main": [
+        [
+          {
+            "node": "Split Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Scenes": {
+      "main": [
+        [
+          {
+            "node": "Generate Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Generate Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Images": {
+      "main": [
+        [
+          {
+            "node": "Generate Voiceover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Voiceover": {
+      "main": [
+        [
+          {
+            "node": "Build video command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build video command": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "060a31d1-d44f-4b76-9086-578006463da7",
+  "meta": {
+    "instanceId": "035436946cce231ef51647e98703d78ab071b0fae2ef0ab6de2eecda428816bb"
+  },
+  "id": "dzklmXr7o0AxOjWE",
+  "tags": []
+}
